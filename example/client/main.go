@@ -10,10 +10,10 @@ import (
 
 func main() {
 
-	dst := []string{"www.sina.com", "www.taobao.com"}
+	dst := []string{"www.sina.com", "www.taobao.com", "www.cisco.com", "www.github.com"}
 	service := "127.0.0.1:1234"
 
-	p := zprobe.New("zartbot", dst, 4, 32)
+	p := zprobe.New("zartbot", dst, 1, 32)
 	go p.Start()
 
 	RemoteAddr, err := net.ResolveUDPAddr("udp", service)
