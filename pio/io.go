@@ -13,6 +13,7 @@ import (
 )
 
 type ProbeClient struct {
+	Name           string
 	SrcAddr        string
 	Dest           []string
 	MaxPath        int
@@ -86,9 +87,10 @@ func (p *ProbeClient) VerifyCfg() {
 
 }
 
-func New(src string, destList []string, maxPath int, maxTTL uint8) *ProbeClient {
+func New(name string, src string, destList []string, maxPath int, maxTTL uint8) *ProbeClient {
 
 	result := &ProbeClient{
+		Name:           name,
 		SrcAddr:        src,
 		Dest:           destList,
 		Protocol:       "udp",
@@ -176,11 +178,10 @@ func (p *ProbeClient) Start() {
 
 	//ID in IPv4 field as round number.
 	id := uint16(1)
-	mod := uint16(1 << 15)
+	mod := uint16(1 << 8)
 
 	//SendPacket
 	for {
-		id = (id + uint16(p.MaxTTL) + 1) % mod
 		for idx := 0; idx < len(p.netDstAddr); idx++ {
 			for pathNum := 0; pathNum < p.MaxPath; pathNum++ {
 				pinfo := &stats.ProbeInfo{
@@ -192,11 +193,13 @@ func (p *ProbeClient) Start() {
 
 				for ttl := 1; ttl <= int(p.MaxTTL); ttl++ {
 					pinfo.TTL = uint8(ttl)
-					pinfo.ID = id + uint16(ttl)
+					//The response packet TTL always eq 1, encode TTL in ID
+					pinfo.ID = id<<8 + uint16(ttl) - 1
 					hdr, payload := BuildIPv4UDPkt(pinfo, 0)
 					Sock.WriteTo(hdr, payload, nil)
 					report := &stats.Metric{
-						HostName:  p.Dest[idx],
+						Host:      p.Name,
+						Dest:      p.Dest[idx],
 						SrcAddr:   pinfo.SrcAddr.String(),
 						DstAddr:   p.netDstAddr[idx].String(),
 						SrcPort:   p.SrcPort[pathNum],
@@ -214,6 +217,7 @@ func (p *ProbeClient) Start() {
 			break
 		}
 		time.Sleep(p.RoundInterval)
+		id = (id + 1) % mod
 	}
 }
 

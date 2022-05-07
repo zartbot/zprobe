@@ -1,28 +1,20 @@
 package main
 
 import (
-	"time"
+	"fmt"
 
-	"github.com/sirupsen/logrus"
-	"github.com/zartbot/zprobe/pio"
-	"github.com/zartbot/zprobe/stats"
+	"github.com/zartbot/zprobe"
 )
 
 func main() {
 
-	dst := []string{"www.cisco.com", "www.baidu.com", "www.sina.com"}
-
-	p := pio.New("", dst, 4, 32)
-	p.RoundInterval = 5 * time.Second
-	p.PacketInterval = 10 * time.Millisecond
+	dst := []string{"www.sina.com", "www.taobao.com"}
+	p := zprobe.New("zartbot", dst, 4, 32)
 	go p.Start()
 
-	report := make(chan *stats.Metric, 10)
-
-	go stats.MetricProcessing(p.RecvChan, p.SendChan, report, 5*time.Second)
-
 	for {
-		e1 := <-report
-		logrus.Info(e1.HostName, "|", e1.RespAddr, "|TTL:", e1.TTL, "|", e1.Delay)
+		e1 := <-p.Report
+		fmt.Printf("%s\n", e1.String())
+
 	}
 }

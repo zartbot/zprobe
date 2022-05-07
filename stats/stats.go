@@ -18,7 +18,8 @@ type ProbeInfo struct {
 }
 
 type Metric struct {
-	HostName  string
+	Host      string
+	Dest      string
 	SrcAddr   string
 	DstAddr   string
 	SrcPort   uint16
@@ -28,6 +29,21 @@ type Metric struct {
 	RespAddr  string
 	TimeStamp time.Time
 	Delay     time.Duration
+}
+
+type Report struct {
+	Host     string
+	Dest     string
+	RespAddr string
+	FlowKey  string
+	Round    uint16
+	TTL      uint8
+	Delay    int32
+}
+
+func (r *Report) String() string {
+	return fmt.Sprintf("%10s | %20s | Resp: %20s | R: %4d | TTL: %4d | %4.2f ms",
+		r.Host, r.Dest, r.RespAddr, r.Round, r.TTL, float64(r.Delay)/1000.0)
 }
 
 func (m *Metric) FullKey() string {
@@ -43,9 +59,8 @@ func (m *Metric) Key() string {
 		m.DstAddr, m.DstPort)
 }
 
-func MetricProcessing(rx chan *Metric, tx chan *Metric, report chan *Metric, timeout time.Duration) {
+func MetricProcessing(rx chan *Metric, tx chan *Metric, report chan *Report, stop chan interface{}, timeout time.Duration) {
 	cache := NewMap(timeout, timeout, false)
-
 	go cache.Run()
 	for {
 		select {
@@ -53,16 +68,25 @@ func MetricProcessing(rx chan *Metric, tx chan *Metric, report chan *Metric, tim
 			t, ok := cache.Load(e1.FullKey())
 			if ok {
 				data := t.(*Metric)
-				data.Delay = e1.TimeStamp.Sub(data.TimeStamp)
-				data.RespAddr = e1.RespAddr
-				report <- data
+				r := &Report{
+					Host:     data.Host,
+					Dest:     data.Dest,
+					RespAddr: e1.RespAddr,
+					FlowKey:  data.Key(),
+					Round:    e1.ID >> 8,
+					TTL:      data.TTL,
+					Delay:    int32(e1.TimeStamp.Sub(data.TimeStamp).Microseconds()),
+				}
+
+				report <- r
 				cache.Delete(e1.FullKey())
 			} else {
-				logrus.Warn(e1.FullKey(), "not found")
+				logrus.Warn(e1.FullKey(), " not found | ", e1.ID, e1.ID>>8, "TTL:", e1.ID%256)
 			}
 		case e2 := <-tx:
 			cache.Store(e2.FullKey(), e2, time.Now())
+		case <-stop:
+			break
 		}
 	}
-
 }

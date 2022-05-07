@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"reflect"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -19,6 +20,9 @@ type Map struct {
 	CheckFreq  int64
 	ExpireTime sync.Map
 	Verbose    bool
+
+	stopSignal *int32 //atomic Counters,stop when cnt =1
+
 }
 
 //NewMap is a construct function to create tsyncmap.
@@ -26,12 +30,19 @@ func NewMap(timeout time.Duration, checkfreq time.Duration, verbose bool) *Map {
 	t := int64(timeout)
 	f := int64(checkfreq)
 
-	return &Map{
+	r := &Map{
 		Name:      "traceroute",
 		Timeout:   t,
 		CheckFreq: f,
 		Verbose:   verbose,
 	}
+
+	var sig int32 = 0
+	r.stopSignal = &sig
+	atomic.StoreInt32(r.stopSignal, 0)
+
+	go r.Run()
+	return r
 }
 
 //Load returns the value from tsyncmap
@@ -107,7 +118,9 @@ func (tmap *Map) Delete(key interface{}) {
 
 //Run is a coroutine to help tsyncmap manage the expire data.
 func (tmap *Map) Run() {
+	atomic.StoreInt32(tmap.stopSignal, 0)
 	rand.Seed(time.Now().UnixNano())
+
 	r := tmap.CheckFreq / 5
 	for {
 		currentTime := time.Now()
@@ -125,7 +138,14 @@ func (tmap *Map) Run() {
 			tmap.ShowData()
 		}
 		time.Sleep(time.Duration(tmap.CheckFreq + rand.Int63n(r)))
+		if atomic.LoadInt32(tmap.stopSignal) == 1 {
+			break
+		}
 	}
+}
+
+func (tmap *Map) Stop() {
+	atomic.StoreInt32(tmap.stopSignal, 1)
 }
 
 func (tmap *Map) ShowExpireTime() {
