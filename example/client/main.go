@@ -11,7 +11,7 @@ import (
 
 func main() {
 
-	dst := []string{"www.sina.com", "www.taobao.com", "www.cisco.com", "www.github.com"}
+	dst := []string{"www.sina.com", "www.baidu.com", "www.tencent.com", "www.taobao.com", "www.cisco.com", "www.github.com", "www.google.com", "www.facebook.com", "www.twitter.com", "www.amazon.com"}
 	service := "127.0.0.1:1234"
 
 	p := zprobe.New("zartbot", dst, 8, 32, 2*time.Second)

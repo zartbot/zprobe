@@ -79,5 +79,7 @@ CREATE TABLE IF NOT EXISTS zprobe (
 	, Latitude Float64
 	, Longitude Float64
 	, Timestamp DateTime
-) Engine = Memory
+) Engine = MergeTree
+PARTITION BY (toStartOfHour(Timestamp))
+ORDER BY (Host,Dest,TTL,FlowKey)
 `
