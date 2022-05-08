@@ -12,9 +12,10 @@ type ProbeConfig struct {
 	Report chan *stats.Report
 
 	statsStop chan interface{}
+	timeout   time.Duration
 }
 
-func New(name string, dst []string, maxPath int, maxTTL int) *ProbeConfig {
+func New(name string, dst []string, maxPath int, maxTTL int, timeout time.Duration) *ProbeConfig {
 
 	client := pio.New(name, "", dst, maxPath, uint8(maxTTL))
 
@@ -24,6 +25,7 @@ func New(name string, dst []string, maxPath int, maxTTL int) *ProbeConfig {
 		client:    client,
 		Report:    make(chan *stats.Report, 10),
 		statsStop: make(chan interface{}),
+		timeout:   timeout,
 	}
 	return result
 }
@@ -39,7 +41,7 @@ func (p *ProbeConfig) SetRoundInterval(t time.Duration) {
 func (p *ProbeConfig) Start() {
 	go p.client.Start()
 
-	go stats.MetricProcessing(p.client.RecvChan, p.client.SendChan, p.Report, p.statsStop, 2*time.Second)
+	go stats.MetricProcessing(p.client.RecvChan, p.client.SendChan, p.Report, p.statsStop, p.timeout)
 
 }
 

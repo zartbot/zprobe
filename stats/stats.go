@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"net"
 	"time"
-
-	"github.com/sirupsen/logrus"
 )
 
 type ProbeInfo struct {
@@ -80,9 +78,13 @@ func MetricProcessing(rx chan *Metric, tx chan *Metric, report chan *Report, sto
 
 				report <- r
 				cache.Delete(e1.FullKey())
-			} else {
-				logrus.Warn(e1.FullKey(), " not found | ", e1.ID, e1.ID>>8, "TTL:", e1.ID%256)
 			}
+
+			/*
+				else {
+					logrus.Warn(e1.FullKey(), " not found | ", e1.ID, e1.ID>>8, "TTL:", e1.ID%256)
+				}*/
+
 		case e2 := <-tx:
 			cache.Store(e2.FullKey(), e2, time.Now())
 		case <-stop:

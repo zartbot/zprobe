@@ -14,7 +14,7 @@ func main() {
 	dst := []string{"www.sina.com", "www.taobao.com", "www.cisco.com", "www.github.com"}
 	service := "127.0.0.1:1234"
 
-	p := zprobe.New("zartbot", dst, 8, 32)
+	p := zprobe.New("zartbot", dst, 8, 32, 2*time.Second)
 	p.SetPacketInterval(50 * time.Millisecond)
 	p.SetRoundInterval(10 * time.Second)
 	go p.Start()
