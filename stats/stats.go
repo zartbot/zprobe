@@ -47,6 +47,7 @@ type Report struct {
 	Path     int
 	Host     string
 	Dest     string
+	DestAddr string
 	RespAddr string
 	FlowKey  string
 	Round    uint16
@@ -74,6 +75,7 @@ func MetricProcessing(tx chan *Metric, rx chan *Metric, report chan *Report, sto
 				Host:     t0.Host,
 				Dest:     t0.Dest,
 				Path:     t0.Path,
+				DestAddr: t0.DstAddr,
 				RespAddr: "",
 				FlowKey:  t0.Key(),
 				Round:    t0.ID >> 8,
@@ -89,6 +91,7 @@ func MetricProcessing(tx chan *Metric, rx chan *Metric, report chan *Report, sto
 				r := &Report{
 					Host:     data.Host,
 					Dest:     data.Dest,
+					DestAddr: data.DstAddr,
 					Path:     data.Path,
 					RespAddr: e1.RespAddr,
 					FlowKey:  data.Key(),

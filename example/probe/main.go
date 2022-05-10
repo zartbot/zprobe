@@ -10,11 +10,15 @@ import (
 	"github.com/zartbot/zprobe/stats"
 )
 
+var DelayWinSize int = 32
+var LossWinSize int = 64
+
 func main() {
 	SessionDB = &sync.Map{}
 
 	probeName := "zartbot"
-	probList := []string{"www.sina.com", "202.120.58.161", "www.cisco.com"}
+	probList := []string{"www.sina.com", "www.baidu.com", "www.tencent.com", "www.taobao.com", "www.cisco.com", "www.github.com", "www.google.com", "www.facebook.com", "www.twitter.com", "www.amazon.com"}
+	//probList = []string{"www.amazon.com"}
 	maxPath := 4
 	maxTTL := 32
 
@@ -26,11 +30,13 @@ func main() {
 				RespAddr:   make(map[int]string),
 				ServerInfo: make([]*stats.ServerInfo, maxTTL+1),
 				Stats:      make([]*stats.RollingStatus, maxTTL+1),
+				InitFlag:   make([]uint8, maxTTL+1),
 			}
 			for j := 0; j <= maxTTL; j++ {
 				db.RespAddr[j] = ""
 				db.ServerInfo[j] = &stats.ServerInfo{}
-				db.Stats[j] = stats.NewRollingStatus(32, 64)
+				db.Stats[j] = stats.NewRollingStatus(DelayWinSize, LossWinSize)
+				db.InitFlag[j] = 0
 				//delayWinSize need > 31 for jitter accuracy
 				//loss is 64bits bitmap with 1/64 accuracy
 			}
@@ -43,14 +49,9 @@ func main() {
 	p.SetRoundInterval(5 * time.Second)
 
 	go p.Start()
-
 	g := geoip.New("../geoip/geoip.mmdb", "../geoip/asn.mmdb")
 
-	go printDB(probeName, probList, maxPath)
-	for {
-		r := <-p.Report
-		go ProcessingRecord(r, g)
-
-	}
+	go ProcessRecord(p.Report, g)
+	printDB(probeName, probList, maxPath)
 
 }

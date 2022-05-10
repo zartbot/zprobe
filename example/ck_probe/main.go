@@ -36,12 +36,15 @@ CREATE TABLE IF NOT EXISTS zprobe (
 PARTITION BY (toStartOfHour(Timestamp))
 ORDER BY (Host,Dest,TTL,FlowKey)
 `
+var DelayWinSize int = 32
+var LossWinSize int = 64
 
 func main() {
 	SessionDB = &sync.Map{}
 
 	probeName := "zartbot"
 	probList := []string{"www.sina.com", "www.baidu.com", "www.tencent.com", "www.taobao.com", "www.cisco.com", "www.github.com", "www.google.com", "www.facebook.com", "www.twitter.com", "www.amazon.com"}
+	//probList = []string{"www.amazon.com"}
 	maxPath := 4
 	maxTTL := 32
 	ckAddress := "127.0.0.1:9000"
@@ -56,11 +59,13 @@ func main() {
 				RespAddr:   make(map[int]string),
 				ServerInfo: make([]*stats.ServerInfo, maxTTL+1),
 				Stats:      make([]*stats.RollingStatus, maxTTL+1),
+				InitFlag:   make([]uint8, maxTTL+1),
 			}
 			for j := 0; j <= maxTTL; j++ {
 				db.RespAddr[j] = ""
 				db.ServerInfo[j] = &stats.ServerInfo{}
-				db.Stats[j] = stats.NewRollingStatus(32, 64)
+				db.Stats[j] = stats.NewRollingStatus(DelayWinSize, LossWinSize)
+				db.InitFlag[j] = 0
 				//delayWinSize need > 31 for jitter accuracy
 				//loss is 64bits bitmap with 1/64 accuracy
 			}
@@ -142,6 +147,9 @@ func main() {
 					)
 					if err != nil {
 						logrus.Warn("batch insertion fail:", err)
+					}
+					if data.RespAddr[i] == data.DestAddr {
+						break
 					}
 				}
 			}
