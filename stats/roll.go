@@ -102,5 +102,5 @@ func (r *RollingStatus) UpdateLoss() {
 
 func (r *RollingStatus) Get() (float64, float64, float64) {
 	sd := math.Sqrt(r.VarSum / float64(r.windowSize))
-	return r.Mean, sd, float64(r.loss.BitCount()) / float64(r.windowSize)
+	return r.Mean, sd, float64(r.loss.BitCount()) / float64(r.loss.size)
 }
