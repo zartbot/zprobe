@@ -121,14 +121,14 @@ func printDB(probeName string, probList []string, maxPath int) {
 					pLatency := fmt.Sprintf("%8.2fms", delay/1000)
 					pJitter := fmt.Sprintf("%8.2fms", jitter/1000)
 
-					pData := []string{pTTL, pServer, pName, pCity, pCountry, pASN, pSP, pLatency, pJitter, fmt.Sprintf("%4.1f%%", loss)}
+					pData := []string{pTTL, pServer, pName, pCity, pCountry, pASN, pSP, pLatency, pJitter, fmt.Sprintf("%4.1f%%", loss*100)}
 					rowColor := make([]tablewriter.Colors, len(pData))
 					for i := 0; i < len(pData); i++ {
 						rowColor[i] = ColorNormal
 					}
 					rowColor[7] = GetColorByLatency(delay / 1000)
 					rowColor[8] = GetColorByLatency(jitter / 1000)
-					rowColor[9] = GetColorByLoss(loss)
+					rowColor[9] = GetColorByLoss(loss * 100)
 					table.Rich(pData, rowColor)
 
 					if data.RespAddr[i] == data.DestAddr {
