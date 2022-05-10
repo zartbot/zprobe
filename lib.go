@@ -40,8 +40,7 @@ func (p *ProbeConfig) SetRoundInterval(t time.Duration) {
 
 func (p *ProbeConfig) Start() {
 	go p.client.Start()
-
-	go stats.MetricProcessing(p.client.RecvChan, p.client.SendChan, p.Report, p.statsStop, p.timeout)
+	go stats.MetricProcessing(p.client.SendChan, p.client.RecvChan, p.Report, p.statsStop, p.timeout)
 
 }
 

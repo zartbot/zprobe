@@ -23,13 +23,14 @@ type ProbeClient struct {
 	RoundInterval  time.Duration
 	SendChan       chan *stats.Metric
 	RecvChan       chan *stats.Metric
+	RecvChan0      chan *stats.Metric //used for the round start indicator
 	SrcPort        []uint16
 	DstPort        []uint16
-
-	recvICMPConn *net.IPConn
-	netSrcAddr   net.IP
-	netDstAddr   []net.IP
-	af           string
+	DstProbePort   []uint16
+	recvICMPConn   *net.IPConn
+	netSrcAddr     net.IP
+	netDstAddr     []net.IP
+	af             string
 
 	stopSignal *int32 //atomic Counters,stop when cnt =1
 
@@ -98,10 +99,12 @@ func New(name string, src string, destList []string, maxPath int, maxTTL uint8) 
 		MaxTTL:         maxTTL,
 		PacketInterval: time.Duration(100 * time.Microsecond),
 		RoundInterval:  time.Duration(1 * time.Second),
-		SendChan:       make(chan *stats.Metric, 10),
-		RecvChan:       make(chan *stats.Metric, 10),
+		SendChan:       make(chan *stats.Metric, 100),
+		RecvChan:       make(chan *stats.Metric, 100),
+		RecvChan0:      make(chan *stats.Metric, 100),
 
-		netDstAddr: make([]net.IP, len(destList)),
+		netDstAddr:   make([]net.IP, len(destList)),
+		DstProbePort: make([]uint16, len(destList)),
 	}
 
 	//build port pair
@@ -110,6 +113,10 @@ func New(name string, src string, destList []string, maxPath int, maxTTL uint8) 
 	for i := 0; i < maxPath; i++ {
 		result.SrcPort[i] = uint16(1000 + rand.Int31n(500))
 		result.DstPort[i] = uint16(33434 + rand.Int31n(64))
+	}
+
+	for i := 0; i < len(destList); i++ {
+		result.DstProbePort[i] = 443
 	}
 
 	result.VerifyCfg()
@@ -123,8 +130,6 @@ func (p *ProbeClient) Recv() {
 	if err != nil {
 		logrus.Fatal("bind failure:", err)
 	}
-
-	logrus.Info("Listing icmp packets...")
 	for {
 		buf := make([]byte, 1500)
 		n, raddr, err := p.recvICMPConn.ReadFrom(buf)
@@ -183,6 +188,10 @@ func (p *ProbeClient) Start() {
 	//SendPacket
 	for {
 		for idx := 0; idx < len(p.netDstAddr); idx++ {
+			//directly probe destination
+
+			go p.IPv4TCPPing(p.Dest[idx], p.netDstAddr[idx].String(), id<<8, p.DstProbePort[idx])
+
 			for pathNum := 0; pathNum < p.MaxPath; pathNum++ {
 				pinfo := &stats.ProbeInfo{
 					SrcAddr: p.netSrcAddr,
@@ -190,8 +199,8 @@ func (p *ProbeClient) Start() {
 					SrcPort: p.SrcPort[pathNum],
 					DstPort: p.DstPort[pathNum],
 				}
-
 				for ttl := 1; ttl <= int(p.MaxTTL); ttl++ {
+					time.Sleep(p.PacketInterval)
 					pinfo.TTL = uint8(ttl)
 					//The response packet TTL always eq 1, encode TTL in ID
 					pinfo.ID = id<<8 + uint16(ttl) - 1
@@ -200,6 +209,7 @@ func (p *ProbeClient) Start() {
 					report := &stats.Metric{
 						Host:      p.Name,
 						Dest:      p.Dest[idx],
+						Path:      pathNum + 1,
 						SrcAddr:   pinfo.SrcAddr.String(),
 						DstAddr:   p.netDstAddr[idx].String(),
 						SrcPort:   p.SrcPort[pathNum],
@@ -210,7 +220,6 @@ func (p *ProbeClient) Start() {
 					}
 					p.SendChan <- report
 				}
-				time.Sleep(p.PacketInterval)
 			}
 		}
 		if atomic.LoadInt32(p.stopSignal) == 1 {
