@@ -22,7 +22,8 @@ sudo grafana-cli plugins install gowee-traceroutemap-panel
 sudo grafana-cli plugins install novatec-sdg-panel
 sudo grafana-cli plugins install agenty-flowcharting-panel
 
-
+sudo service grafana-server stop
+sudo service grafana-server start
 
 
 grafana UI-ID for prometheuse node export

@@ -127,6 +127,7 @@ type Session struct {
 	ServerInfo []*ServerInfo
 	Stats      []*RollingStatus
 	InitFlag   []uint8
+	Lock       *sync.RWMutex
 }
 
 func ProcessRecord(ch chan *Report, g *geoip.GeoIPDB, SessionDB *sync.Map, DelayWinSize int) {
@@ -144,6 +145,8 @@ func insert(r *Report, g *geoip.GeoIPDB, SessionDB *sync.Map, DelayWinSize int) 
 	}
 	s := t.(*Session)
 	ttl := int(r.TTL)
+
+	s.Lock.Lock()
 	if s.DestAddr == "" {
 		s.DestAddr = r.DestAddr
 	}
@@ -163,6 +166,7 @@ func insert(r *Report, g *geoip.GeoIPDB, SessionDB *sync.Map, DelayWinSize int) 
 			s.InitFlag[ttl] = 1
 		}
 	}
+	s.Lock.Unlock()
 	SessionDB.Store(r.Key(), s)
 }
 
@@ -202,6 +206,7 @@ func NewSessionDB(probeName string, probeList []string, maxPath int, maxTTL int,
 				ServerInfo: make([]*ServerInfo, maxTTL+1),
 				Stats:      make([]*RollingStatus, maxTTL+1),
 				InitFlag:   make([]uint8, maxTTL+1),
+				Lock:       new(sync.RWMutex),
 			}
 			for j := 0; j <= maxTTL; j++ {
 				db.RespAddr[j] = ""
@@ -234,6 +239,8 @@ func PrintDB(SessionDB *sync.Map, probeName string, probList []string, maxPath i
 					continue
 				}
 				data := tmp.(*Session)
+				data.Lock.RLock()
+
 				for i := 0; i < len(data.Stats); i++ {
 					if data.RespAddr[i] == "" {
 						continue
@@ -267,6 +274,7 @@ func PrintDB(SessionDB *sync.Map, probeName string, probList []string, maxPath i
 						break
 					}
 				}
+				data.Lock.RUnlock()
 			}
 			table.Render()
 		}

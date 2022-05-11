@@ -99,9 +99,9 @@ func New(name string, src string, destList []string, maxPath int, maxTTL uint8) 
 		MaxTTL:         maxTTL,
 		PacketInterval: time.Duration(100 * time.Microsecond),
 		RoundInterval:  time.Duration(1 * time.Second),
-		SendChan:       make(chan *stats.Metric, 100),
-		RecvChan:       make(chan *stats.Metric, 100),
-		RecvChan0:      make(chan *stats.Metric, 100),
+		SendChan:       make(chan *stats.Metric, 10000),
+		RecvChan:       make(chan *stats.Metric, 10000),
+		RecvChan0:      make(chan *stats.Metric, 10000),
 
 		netDstAddr:   make([]net.IP, len(destList)),
 		DstProbePort: make([]uint16, len(destList)),
@@ -218,8 +218,8 @@ func (p *ProbeClient) Start() {
 						TimeStamp: time.Now(),
 					}
 					p.SendChan <- report
+					time.Sleep(p.PacketInterval)
 				}
-				time.Sleep(p.PacketInterval)
 			}
 		}
 		if atomic.LoadInt32(p.stopSignal) == 1 {

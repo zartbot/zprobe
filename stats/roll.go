@@ -85,14 +85,14 @@ func NewRollingStatus(delayWinSize int, lossWinSize int) *RollingStatus {
 	}
 }
 
-func (r *RollingStatus) Update(x_new float64) {
-	next_index := (r.index + 1) % r.windowSize
-	new_mean := r.Mean + (x_new-r.data[next_index])/float64(r.windowSize)
-	r.VarSum = r.VarSum + (x_new-r.Mean)*(x_new-new_mean) -
-		(r.data[next_index]-r.Mean)*(r.data[next_index]-new_mean)
-	r.data[next_index] = x_new
-	r.index = next_index
-	r.Mean = new_mean
+func (r *RollingStatus) Update(xN float64) {
+	idxN := (r.index + 1) % r.windowSize
+	x0 := r.data[idxN]
+	meanN := r.Mean + (xN-x0)/float64(r.windowSize)
+	r.VarSum = r.VarSum + (xN-x0)*(xN-meanN+x0-r.Mean)
+	r.data[idxN] = xN
+	r.index = idxN
+	r.Mean = meanN
 	r.loss.UpdatePass()
 }
 

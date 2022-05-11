@@ -11,18 +11,23 @@ import (
 func main() {
 
 	probeName := "zartbot"
-	probeList := []string{"www.sina.com",
+	probeList := []string{
 		"www.baidu.com",
 		"www.tencent.com",
 		"cn.taobao.com",
+		"www.jd.com",
+		"www.weibo.com",
 		"www.163.com.cn",
 		"www.sohu.com",
 		"www.sina.com.cn",
 		"www.qq.com",
 		"www.youku.com",
+		"www.zhihu.com",
+		"www.iqiyi.com",
+		"www.bilibili.com",
+		"www.douban.com",
 		"www.sjtu.edu.cn",
 		"www.online.sh.cn",
-		"bilibili.com",
 		"www.cisco.com",
 		"www.github.com",
 		"www.google.com",
@@ -30,6 +35,8 @@ func main() {
 		"www.twitter.com",
 		"www.amazon.com",
 		"www.aws.com",
+		"www.netflix.com",
+		"www.ebay.com",
 	}
 
 	maxPath := 4

@@ -1,0 +1,767 @@
+{
+    "__inputs": [
+      {
+        "name": "DS_CLICKHOUSE",
+        "label": "ClickHouse",
+        "description": "",
+        "type": "datasource",
+        "pluginId": "vertamedia-clickhouse-datasource",
+        "pluginName": "Altinity plugin for ClickHouse"
+      }
+    ],
+    "__elements": [],
+    "__requires": [
+      {
+        "type": "grafana",
+        "id": "grafana",
+        "name": "Grafana",
+        "version": "8.5.0"
+      },
+      {
+        "type": "panel",
+        "id": "table",
+        "name": "Table",
+        "version": ""
+      },
+      {
+        "type": "panel",
+        "id": "timeseries",
+        "name": "Time series",
+        "version": ""
+      },
+      {
+        "type": "datasource",
+        "id": "vertamedia-clickhouse-datasource",
+        "name": "Altinity plugin for ClickHouse",
+        "version": "2.4.4"
+      }
+    ],
+    "annotations": {
+      "list": [
+        {
+          "builtIn": 1,
+          "datasource": {
+            "type": "grafana",
+            "uid": "-- Grafana --"
+          },
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "target": {
+            "limit": 100,
+            "matchAny": false,
+            "tags": [],
+            "type": "dashboard"
+          },
+          "type": "dashboard"
+        }
+      ]
+    },
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 1,
+    "id": null,
+    "iteration": 1652223783925,
+    "links": [],
+    "liveNow": false,
+    "panels": [
+      {
+        "datasource": {
+          "type": "vertamedia-clickhouse-datasource",
+          "uid": "${DS_CLICKHOUSE}"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": -1,
+              "drawStyle": "line",
+              "fillOpacity": 0,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              },
+              "lineInterpolation": "linear",
+              "lineStyle": {
+                "fill": "solid"
+              },
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "never",
+              "spanNulls": true,
+              "stacking": {
+                "group": "A",
+                "mode": "none"
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            },
+            "unit": "µs"
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 11,
+          "w": 8,
+          "x": 0,
+          "y": 0
+        },
+        "id": 4,
+        "options": {
+          "legend": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "tooltip": {
+            "mode": "single",
+            "sort": "none"
+          }
+        },
+        "targets": [
+          {
+            "database": "default",
+            "datasource": {
+              "type": "vertamedia-clickhouse-datasource",
+              "uid": "${DS_CLICKHOUSE}"
+            },
+            "dateColDataType": "",
+            "dateLoading": false,
+            "dateTimeColDataType": "Timestamp",
+            "dateTimeType": "DATETIME",
+            "datetimeLoading": false,
+            "extrapolate": true,
+            "format": "time_series",
+            "formattedQuery": "SELECT $timeSeries as t, count() FROM $table WHERE $timeFilter GROUP BY t ORDER BY t",
+            "intervalFactor": 1,
+            "query": "SELECT\n    $timeSeries as t,\n    TTL,\n    avg(Delay)\nFROM $table\n\nWHERE $timeFilter\n$conditionalTest(AND Dest like '%$query_dest%',$query_dest)\n$conditionalTest(AND RespAddr like '%$query_respadd%',$query_respadd)\n$conditionalTest(AND TTL = $query_ttl,$query_ttl)\n\nGROUP BY TTL,t\n\nORDER BY t\n",
+            "rawQuery": "SELECT\n    (intDiv(toUInt32(Timestamp), 10) * 10) * 1000 as t,\n    TTL,\n    avg(Delay)\nFROM default.zprobe\n\nWHERE Timestamp >= toDateTime(1652061700) AND Timestamp <= toDateTime(1652083300)\n AND Dest like '%google%' \n \n \n\nGROUP BY TTL,t\n\nORDER BY t",
+            "refId": "A",
+            "round": "0s",
+            "skip_comments": true,
+            "table": "zprobe",
+            "tableLoading": false
+          }
+        ],
+        "title": "Latency by TTL",
+        "transparent": true,
+        "type": "timeseries"
+      },
+      {
+        "datasource": {
+          "type": "vertamedia-clickhouse-datasource",
+          "uid": "${DS_CLICKHOUSE}"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": -1,
+              "drawStyle": "line",
+              "fillOpacity": 0,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              },
+              "lineInterpolation": "linear",
+              "lineStyle": {
+                "fill": "solid"
+              },
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "never",
+              "spanNulls": true,
+              "stacking": {
+                "group": "A",
+                "mode": "none"
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            },
+            "unit": "percentunit"
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 11,
+          "w": 7,
+          "x": 8,
+          "y": 0
+        },
+        "id": 6,
+        "options": {
+          "legend": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "tooltip": {
+            "mode": "single",
+            "sort": "none"
+          }
+        },
+        "targets": [
+          {
+            "database": "default",
+            "datasource": {
+              "type": "vertamedia-clickhouse-datasource",
+              "uid": "${DS_CLICKHOUSE}"
+            },
+            "dateColDataType": "",
+            "dateLoading": false,
+            "dateTimeColDataType": "Timestamp",
+            "dateTimeType": "DATETIME",
+            "datetimeLoading": false,
+            "extrapolate": true,
+            "format": "time_series",
+            "formattedQuery": "SELECT $timeSeries as t, count() FROM $table WHERE $timeFilter GROUP BY t ORDER BY t",
+            "intervalFactor": 1,
+            "query": "SELECT\n    $timeSeries as t,\n    TTL,\n    avg(Loss)\nFROM $table\n\nWHERE $timeFilter\n$conditionalTest(AND Dest like '%$query_dest%',$query_dest)\n$conditionalTest(AND RespAddr like '%$query_respadd%',$query_respadd)\n$conditionalTest(AND TTL = $query_ttl,$query_ttl)\n\nGROUP BY TTL,t\n\nORDER BY t\n",
+            "rawQuery": "SELECT\n    (intDiv(toUInt32(Timestamp), 2) * 2) * 1000 as t,\n    TTL,\n    avg(Loss)\nFROM default.zprobe\n\nWHERE Timestamp >= toDateTime(1652163089) AND Timestamp <= toDateTime(1652166689)\n AND Dest like '%202%' \n \n AND TTL = 0 \n\nGROUP BY TTL,t\n\nORDER BY t",
+            "refId": "A",
+            "round": "0s",
+            "skip_comments": true,
+            "table": "zprobe",
+            "tableLoading": false
+          }
+        ],
+        "title": "Loss by TTL",
+        "transparent": true,
+        "type": "timeseries"
+      },
+      {
+        "datasource": {
+          "type": "vertamedia-clickhouse-datasource",
+          "uid": "${DS_CLICKHOUSE}"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": -1,
+              "drawStyle": "line",
+              "fillOpacity": 0,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              },
+              "lineInterpolation": "linear",
+              "lineStyle": {
+                "fill": "solid"
+              },
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "never",
+              "spanNulls": true,
+              "stacking": {
+                "group": "A",
+                "mode": "none"
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            },
+            "unit": "µs"
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 11,
+          "w": 9,
+          "x": 15,
+          "y": 0
+        },
+        "id": 5,
+        "options": {
+          "legend": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "tooltip": {
+            "mode": "single",
+            "sort": "none"
+          }
+        },
+        "targets": [
+          {
+            "database": "default",
+            "datasource": {
+              "type": "vertamedia-clickhouse-datasource",
+              "uid": "${DS_CLICKHOUSE}"
+            },
+            "dateColDataType": "",
+            "dateLoading": false,
+            "dateTimeColDataType": "Timestamp",
+            "dateTimeType": "DATETIME",
+            "datetimeLoading": false,
+            "extrapolate": true,
+            "format": "time_series",
+            "formattedQuery": "SELECT $timeSeries as t, count() FROM $table WHERE $timeFilter GROUP BY t ORDER BY t",
+            "intervalFactor": 1,
+            "query": "SELECT\n    $timeSeries as t,\n    TTL,\n    avg(Jitter)\nFROM $table\n\nWHERE $timeFilter\n$conditionalTest(AND Dest like '%$query_dest%',$query_dest)\n$conditionalTest(AND RespAddr like '%$query_respadd%',$query_respadd)\n$conditionalTest(AND TTL = $query_ttl,$query_ttl)\n\nGROUP BY TTL,t\n\nORDER BY t\n",
+            "rawQuery": "SELECT\n    (intDiv(toUInt32(Timestamp), 1) * 1) * 1000 as t,\n    TTL,\n    avg(Jitter)\nFROM default.zprobe\n\nWHERE Timestamp >= toDateTime(1652162814) AND Timestamp <= toDateTime(1652164614)\n AND Dest like '%netflix%' \n \n \n\nGROUP BY TTL,t\n\nORDER BY t",
+            "refId": "A",
+            "round": "0s",
+            "skip_comments": true,
+            "table": "zprobe",
+            "tableLoading": false
+          }
+        ],
+        "title": "Jitter by TTL",
+        "transparent": true,
+        "type": "timeseries"
+      },
+      {
+        "datasource": {
+          "type": "vertamedia-clickhouse-datasource",
+          "uid": "${DS_CLICKHOUSE}"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "custom": {
+              "align": "auto",
+              "displayMode": "auto",
+              "inspect": false
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "Delay"
+              },
+              "properties": [
+                {
+                  "id": "unit",
+                  "value": "µs"
+                },
+                {
+                  "id": "custom.width",
+                  "value": 129
+                },
+                {
+                  "id": "thresholds",
+                  "value": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": null
+                      },
+                      {
+                        "color": "#EAB839",
+                        "value": 50010
+                      },
+                      {
+                        "color": "red",
+                        "value": 150000
+                      }
+                    ]
+                  }
+                },
+                {
+                  "id": "custom.displayMode",
+                  "value": "color-text"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "Jitter"
+              },
+              "properties": [
+                {
+                  "id": "custom.width",
+                  "value": 68
+                },
+                {
+                  "id": "unit",
+                  "value": "µs"
+                },
+                {
+                  "id": "custom.displayMode",
+                  "value": "color-text"
+                },
+                {
+                  "id": "thresholds",
+                  "value": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": null
+                      },
+                      {
+                        "color": "#EAB839",
+                        "value": 3000
+                      },
+                      {
+                        "color": "red",
+                        "value": 10000
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "Loss"
+              },
+              "properties": [
+                {
+                  "id": "custom.width",
+                  "value": 101
+                },
+                {
+                  "id": "unit",
+                  "value": "percentunit"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "ASN"
+              },
+              "properties": [
+                {
+                  "id": "custom.width",
+                  "value": 101
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "FlowKey"
+              },
+              "properties": [
+                {
+                  "id": "custom.width",
+                  "value": 302
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "SP"
+              },
+              "properties": [
+                {
+                  "id": "custom.width",
+                  "value": 101
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "RecvPkt"
+              },
+              "properties": [
+                {
+                  "id": "custom.width",
+                  "value": 64
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "SPName"
+              },
+              "properties": [
+                {
+                  "id": "custom.width",
+                  "value": 426
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "IP"
+              },
+              "properties": [
+                {
+                  "id": "custom.width"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "City"
+              },
+              "properties": [
+                {
+                  "id": "custom.width",
+                  "value": 246
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "TTL"
+              },
+              "properties": [
+                {
+                  "id": "custom.width",
+                  "value": 65
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "ECMPNum"
+              },
+              "properties": [
+                {
+                  "id": "custom.width",
+                  "value": 162
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "Addr"
+              },
+              "properties": [
+                {
+                  "id": "custom.width",
+                  "value": 417
+                }
+              ]
+            }
+          ]
+        },
+        "gridPos": {
+          "h": 25,
+          "w": 24,
+          "x": 0,
+          "y": 11
+        },
+        "id": 2,
+        "options": {
+          "footer": {
+            "fields": "",
+            "reducer": [
+              "sum"
+            ],
+            "show": false
+          },
+          "showHeader": true,
+          "sortBy": []
+        },
+        "pluginVersion": "8.5.0",
+        "targets": [
+          {
+            "database": "default",
+            "datasource": {
+              "type": "vertamedia-clickhouse-datasource",
+              "uid": "${DS_CLICKHOUSE}"
+            },
+            "dateColDataType": "",
+            "dateLoading": false,
+            "dateTimeColDataType": "Timestamp",
+            "dateTimeType": "DATETIME",
+            "datetimeLoading": false,
+            "extrapolate": true,
+            "format": "table",
+            "formattedQuery": "SELECT $timeSeries as t, count() FROM $table WHERE $timeFilter GROUP BY t ORDER BY t",
+            "intervalFactor": 1,
+            "query": "SELECT\n    Host,\n    Dest,\n    TTL,\n    uniq(RespAddr) as ECMPNum,\n    groupUniqArray(RespAddr) as Addr,\n\n    groupUniqArray(City) as City,\n    groupUniqArray(Country) as Country,\n    groupUniqArray(ASN) as SP,\n    groupUniqArray(SPName) as SPName,\n    avg(Delay) as Delay,\n    avg(Jitter) as Jitter,\n    avg(Loss) as Loss\n      FROM default.zprobe\n      WHERE $timeFilter\n      $conditionalTest(AND Dest like '%$query_dest%',$query_dest)\n      $conditionalTest(AND RespAddr like '%$query_respadd%',$query_respadd)\n      $conditionalTest(AND TTL = $query_ttl,$query_ttl)\nGROUP BY Host,Dest,TTL\nORDER BY Host,Dest,TTL",
+            "rawQuery": "SELECT\n    Host,\n    Dest,\n    TTL,\n    uniq(RespAddr) as ECMPNum,\n    groupUniqArray(RespAddr) as Addr,\n\n    groupUniqArray(City) as City,\n    groupUniqArray(Country) as Country,\n    groupUniqArray(ASN) as SP,\n    groupUniqArray(SPName) as SPName,\n    avg(Delay) as Delay,\n    avg(Jitter) as Jitter,\n    avg(Loss) as Loss\n      FROM default.zprobe\n      WHERE Timestamp >= toDateTime(1652172393) AND Timestamp <= toDateTime(1652176052)\n       AND Dest like '%202%' \n       \n       \nGROUP BY Host,Dest,TTL\nORDER BY Host,Dest,TTL",
+            "refId": "A",
+            "round": "0s",
+            "skip_comments": true,
+            "table": "zprobe",
+            "tableLoading": false
+          }
+        ],
+        "title": "Panel Title",
+        "type": "table"
+      }
+    ],
+    "refresh": "1m",
+    "schemaVersion": 36,
+    "style": "dark",
+    "tags": [],
+    "templating": {
+      "list": [
+        {
+          "current": {
+            "selected": false,
+            "text": "101",
+            "value": "101"
+          },
+          "hide": 0,
+          "label": "dest",
+          "name": "query_dest",
+          "options": [
+            {
+              "selected": true,
+              "text": "101",
+              "value": "101"
+            }
+          ],
+          "query": "101",
+          "skipUrlSync": false,
+          "type": "textbox"
+        },
+        {
+          "current": {
+            "selected": false,
+            "text": "19",
+            "value": "19"
+          },
+          "hide": 0,
+          "label": "ttl",
+          "name": "query_ttl",
+          "options": [
+            {
+              "selected": true,
+              "text": "19",
+              "value": "19"
+            }
+          ],
+          "query": "19",
+          "skipUrlSync": false,
+          "type": "textbox"
+        },
+        {
+          "current": {
+            "selected": false,
+            "text": "",
+            "value": ""
+          },
+          "hide": 0,
+          "label": "respRouter",
+          "name": "query_respadd",
+          "options": [
+            {
+              "selected": false,
+              "text": "taobao",
+              "value": "taobao"
+            }
+          ],
+          "query": "",
+          "skipUrlSync": false,
+          "type": "textbox"
+        }
+      ]
+    },
+    "time": {
+      "from": "now-12h",
+      "to": "now"
+    },
+    "timepicker": {},
+    "timezone": "",
+    "title": "TraceRoute",
+    "uid": "nlIEL-_7k",
+    "version": 45,
+    "weekStart": ""
+  }

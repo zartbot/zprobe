@@ -45,7 +45,7 @@ func main() {
 		"cn.taobao.com",
 		"www.jd.com",
 		"www.weibo.com",
-		"www.163.com.cn",
+		"www.163.com.cn"
 		"www.sohu.com",
 		"www.sina.com.cn",
 		"www.qq.com",
@@ -72,8 +72,7 @@ func main() {
 		"video.huawan.com",
 		"www.zoom.com",
 		"www.webex.com",
-		"meeting.tencent.com",
-	}
+		"meeting.tencent.com"}
 
 	maxPath := 8
 	maxTTL := 32
@@ -89,8 +88,8 @@ func main() {
 	SessionDB := stats.NewSessionDB(probeName, probeList, maxPath, maxTTL, DelayWinSize, LossWinSize)
 
 	p := zprobe.New(probeName, probeList, maxPath, maxTTL, 2*time.Second)
-	p.SetPacketInterval(5 * time.Millisecond)
-	p.SetRoundInterval(5 * time.Second)
+	p.SetPacketInterval(1 * time.Millisecond)
+	p.SetRoundInterval(2 * time.Second)
 
 	go p.Start()
 	g := geoip.New("../geoip/geoip.mmdb", "../geoip/asn.mmdb")
@@ -138,7 +137,9 @@ func main() {
 				if !ok {
 					continue
 				}
+
 				data := tmp.(*stats.Session)
+				data.Lock.RLock()
 				for i := 0; i < len(data.Stats); i++ {
 					if data.RespAddr[i] == "" {
 						continue
@@ -167,6 +168,7 @@ func main() {
 						break
 					}
 				}
+				data.Lock.RUnlock()
 			}
 		}
 		batch.Send()
