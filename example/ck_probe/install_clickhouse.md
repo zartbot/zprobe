@@ -18,6 +18,13 @@ sudo dpkg -i grafana-enterprise_8.5.0_amd64.deb
 
 grafana-cli plugins install vertamedia-clickhouse-datasource
 
+sudo grafana-cli plugins install gowee-traceroutemap-panel
+sudo grafana-cli plugins install novatec-sdg-panel
+sudo grafana-cli plugins install agenty-flowcharting-panel
+
+
+
+
 grafana UI-ID for prometheuse node export
 
 16098

@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
@@ -36,52 +35,68 @@ CREATE TABLE IF NOT EXISTS zprobe (
 PARTITION BY (toStartOfHour(Timestamp))
 ORDER BY (Host,Dest,TTL,FlowKey)
 `
-var DelayWinSize int = 32
-var LossWinSize int = 64
 
 func main() {
-	SessionDB = &sync.Map{}
 
 	probeName := "zartbot"
-	probList := []string{"www.sina.com", "www.baidu.com", "www.tencent.com", "www.taobao.com", "www.cisco.com", "www.github.com", "www.google.com", "www.facebook.com", "www.twitter.com", "www.amazon.com"}
-	//probList = []string{"www.amazon.com"}
-	maxPath := 4
+	probeList := []string{
+		"www.baidu.com",
+		"www.tencent.com",
+		"cn.taobao.com",
+		"www.jd.com",
+		"www.weibo.com",
+		"www.163.com.cn",
+		"www.sohu.com",
+		"www.sina.com.cn",
+		"www.qq.com",
+		"www.youku.com",
+		"www.zhihu.com",
+		"www.iqiyi.com",
+		"www.bilibili.com",
+		"www.douban.com",
+		"www.sjtu.edu.cn",
+		"www.tsinghua.edu.cn",
+		"www.mit.edu",
+		"www.online.sh.cn",
+		"www.cisco.com",
+		"www.github.com",
+		"www.google.com",
+		"www.facebook.com",
+		"www.twitter.com",
+		"www.amazon.com",
+		"www.aws.com",
+		"www.netflix.com",
+		"www.ebay.com",
+		"www.office365.com",
+		"www.salesforce.com",
+		"video.huawan.com",
+		"www.zoom.com",
+		"www.webex.com",
+		"meeting.tencent.com",
+	}
+
+	maxPath := 8
 	maxTTL := 32
+
+	var DelayWinSize int = 32
+	var LossWinSize int = 64
+
 	ckAddress := "127.0.0.1:9000"
 	ckUsername := "default"
 	ckPassword := ""
 
 	//create SessionDB
-	for _, dst := range probList {
-		for i := 0; i <= maxPath; i++ {
-			key := fmt.Sprintf("%s:%s:%d", probeName, dst, i)
-			db := &Session{
-				RespAddr:   make(map[int]string),
-				ServerInfo: make([]*stats.ServerInfo, maxTTL+1),
-				Stats:      make([]*stats.RollingStatus, maxTTL+1),
-				InitFlag:   make([]uint8, maxTTL+1),
-			}
-			for j := 0; j <= maxTTL; j++ {
-				db.RespAddr[j] = ""
-				db.ServerInfo[j] = &stats.ServerInfo{}
-				db.Stats[j] = stats.NewRollingStatus(DelayWinSize, LossWinSize)
-				db.InitFlag[j] = 0
-				//delayWinSize need > 31 for jitter accuracy
-				//loss is 64bits bitmap with 1/64 accuracy
-			}
-			SessionDB.Store(key, db)
-		}
-	}
+	SessionDB := stats.NewSessionDB(probeName, probeList, maxPath, maxTTL, DelayWinSize, LossWinSize)
 
-	p := zprobe.New(probeName, probList, maxPath, maxTTL, 2*time.Second)
+	p := zprobe.New(probeName, probeList, maxPath, maxTTL, 2*time.Second)
 	p.SetPacketInterval(5 * time.Millisecond)
 	p.SetRoundInterval(5 * time.Second)
 
 	go p.Start()
 	g := geoip.New("../geoip/geoip.mmdb", "../geoip/asn.mmdb")
 
-	go ProcessRecord(p.Report, g)
-	go printDB(probeName, probList, maxPath)
+	go stats.ProcessRecord(p.Report, g, SessionDB, DelayWinSize)
+	go stats.PrintDB(SessionDB, probeName, probeList, maxPath)
 
 	ticker := time.NewTicker(60 * time.Second)
 
@@ -116,14 +131,14 @@ func main() {
 			continue
 		}
 
-		for _, dst := range probList {
+		for _, dst := range probeList {
 			for i := 0; i <= maxPath; i++ {
 				key := fmt.Sprintf("%s:%s:%d", probeName, dst, i)
 				tmp, ok := SessionDB.Load(key)
 				if !ok {
 					continue
 				}
-				data := tmp.(*Session)
+				data := tmp.(*stats.Session)
 				for i := 0; i < len(data.Stats); i++ {
 					if data.RespAddr[i] == "" {
 						continue

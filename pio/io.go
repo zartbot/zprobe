@@ -124,6 +124,7 @@ func New(name string, src string, destList []string, maxPath int, maxTTL uint8) 
 }
 
 func (p *ProbeClient) Recv() {
+	//TODO: Add dynamic MaxTTL detection to reduce generated packet
 	laddr := &net.IPAddr{IP: p.netSrcAddr}
 	var err error
 	p.recvICMPConn, err = net.ListenIP("ip4:icmp", laddr)
@@ -142,6 +143,7 @@ func (p *ProbeClient) Recv() {
 			id := binary.BigEndian.Uint16(buf[12:14])
 			//ttl := buf[16]
 
+			//TODO: Add recv DSCP Parser for QoS policy validation
 			dstip := net.IP(buf[24:28])
 			srcip := net.IP(buf[20:24])
 			srcPort := binary.BigEndian.Uint16(buf[28:30])
@@ -189,9 +191,7 @@ func (p *ProbeClient) Start() {
 	for {
 		for idx := 0; idx < len(p.netDstAddr); idx++ {
 			//directly probe destination
-
 			go p.IPv4TCPPing(p.Dest[idx], p.netDstAddr[idx].String(), id<<8, p.DstProbePort[idx])
-
 			for pathNum := 0; pathNum < p.MaxPath; pathNum++ {
 				pinfo := &stats.ProbeInfo{
 					SrcAddr: p.netSrcAddr,
@@ -200,7 +200,6 @@ func (p *ProbeClient) Start() {
 					DstPort: p.DstPort[pathNum],
 				}
 				for ttl := 1; ttl <= int(p.MaxTTL); ttl++ {
-					time.Sleep(p.PacketInterval)
 					pinfo.TTL = uint8(ttl)
 					//The response packet TTL always eq 1, encode TTL in ID
 					pinfo.ID = id<<8 + uint16(ttl) - 1
@@ -220,6 +219,7 @@ func (p *ProbeClient) Start() {
 					}
 					p.SendChan <- report
 				}
+				time.Sleep(p.PacketInterval)
 			}
 		}
 		if atomic.LoadInt32(p.stopSignal) == 1 {
