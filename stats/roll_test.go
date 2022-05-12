@@ -1,6 +1,7 @@
 package stats
 
 import (
+	"fmt"
 	"math"
 	"math/rand"
 	"testing"
@@ -76,4 +77,44 @@ func BenchmarkRollingVar(b *testing.B) {
 	for idx := 0; idx < b.N; idx++ {
 		r.Update(d[idx])
 	}
+}
+
+func BenchmarkRollingWeighted(b *testing.B) {
+	var WinSize int = 100
+	d := make([]float64, b.N)
+	for i := 0; i < b.N; i++ {
+		d[i] = float64(i) + float64(rand.Intn(4000+3*i))
+	}
+	r := NewRollingStatus(WinSize, 64)
+	for idx := 0; idx < b.N; idx++ {
+		r.UpdateWeighted(d[idx])
+	}
+}
+
+func TestRollingWeighted(t *testing.T) {
+	var MaxN int = 100
+	var WinSize int = 100
+
+	r1 := NewRollingStatus(WinSize, 64)
+	r2 := NewRollingStatus(WinSize, 64)
+	for idx := 0; idx < MaxN; idx++ {
+		r1.UpdateWeightedLoss()
+		r2.UpdateWeightedLoss()
+
+		_, _, l1 := r1.Get()
+		_, _, l2 := r2.GetWeighted(3)
+
+		fmt.Printf("%4d  %4.2f weighted: %4.2f delta: %4.2f\n", idx, l1, l2, l2-l1)
+	}
+
+	for idx := MaxN; idx > 0; idx-- {
+		r1.UpdateWeighted(0)
+		r2.UpdateWeighted(0)
+
+		_, _, l1 := r1.Get()
+		_, _, l2 := r2.GetWeighted(3)
+
+		fmt.Printf("%4d  %4.2f weighted: %4.2f delta: %4.2f\n", idx, l1, l2, l2-l1)
+	}
+
 }

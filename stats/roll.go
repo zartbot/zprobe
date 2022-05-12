@@ -4,10 +4,29 @@ import (
 	"math"
 )
 
+var bitsInByte = [256]uint8{
+	0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4,
+	1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
+	1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
+	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
+	1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
+	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
+	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
+	3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
+	1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
+	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
+	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
+	3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
+	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
+	3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
+	3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
+	4, 5, 5, 6, 5, 6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8}
+
 type LossBitMap struct {
-	index uint64
-	data  []uint32
-	size  uint64
+	index        uint64
+	data         []uint32
+	size         uint64
+	weightedLoss uint8
 }
 
 func NewLossBitMap(size uint64) *LossBitMap {
@@ -44,6 +63,18 @@ func (b *LossBitMap) UpdateLoss() {
 func (b *LossBitMap) UpdatePass() {
 	b.Unset(b.index)
 	b.index = (b.index + 1) % b.size
+}
+
+func (b *LossBitMap) UpdateWeightedLoss() {
+	b.Set(b.index)
+	b.index = (b.index + 1) % b.size
+	b.weightedLoss = b.weightedLoss<<1 + 1
+}
+
+func (b *LossBitMap) UpdateWeightedPass() {
+	b.Unset(b.index)
+	b.index = (b.index + 1) % b.size
+	b.weightedLoss = b.weightedLoss << 1
 }
 
 func swar(i uint32) uint32 {
@@ -85,7 +116,8 @@ func NewRollingStatus(delayWinSize int, lossWinSize int) *RollingStatus {
 	}
 }
 
-func (r *RollingStatus) Update(xN float64) {
+func (r *RollingStatus) UpdateLatency(xN float64) {
+	//TODO: add new field for weighted average ?
 	idxN := (r.index + 1) % r.windowSize
 	x0 := r.data[idxN]
 	meanN := r.Mean + (xN-x0)/float64(r.windowSize)
@@ -93,6 +125,10 @@ func (r *RollingStatus) Update(xN float64) {
 	r.data[idxN] = xN
 	r.index = idxN
 	r.Mean = meanN
+}
+
+func (r *RollingStatus) Update(xN float64) {
+	r.UpdateLatency(xN)
 	r.loss.UpdatePass()
 }
 
@@ -103,4 +139,21 @@ func (r *RollingStatus) UpdateLoss() {
 func (r *RollingStatus) Get() (float64, float64, float64) {
 	sd := math.Sqrt(r.VarSum / float64(r.windowSize))
 	return r.Mean, sd, float64(r.loss.BitCount()) / float64(r.loss.size)
+}
+
+func (r *RollingStatus) UpdateWeighted(xN float64) {
+	r.UpdateLatency(xN)
+	r.loss.UpdateWeightedPass()
+}
+
+func (r *RollingStatus) UpdateWeightedLoss() {
+	r.loss.UpdateWeightedLoss()
+}
+
+func (r *RollingStatus) GetWeighted(N uint64) (float64, float64, float64) {
+	sd := math.Sqrt(r.VarSum / float64(r.windowSize))
+	lossCnt := r.loss.BitCount() +
+		N*uint64(bitsInByte[r.loss.weightedLoss])
+
+	return r.Mean, sd, float64(lossCnt) / float64(r.loss.size+N<<3)
 }
