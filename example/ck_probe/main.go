@@ -146,7 +146,7 @@ func main() {
 					}
 					si := data.ServerInfo[i]
 					sd := data.Stats[i]
-					delay, jitter, loss := sd.Get()
+					delay, jitter, loss := sd.GetWeighted(2)
 					err := batch.Append(
 						probeName,
 						dst,

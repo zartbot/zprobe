@@ -156,12 +156,12 @@ func insert(r *Report, g *geoip.GeoIPDB, SessionDB *sync.Map, DelayWinSize int) 
 		s.ServerInfo[ttl] = Enrichment(r.RespAddr, g)
 	}
 	if r.Loss == 1 {
-		s.Stats[ttl].UpdateLoss()
+		s.Stats[ttl].UpdateWeightedLoss()
 	} else {
 		s.Stats[ttl].Update(float64(r.Delay))
 		if s.InitFlag[ttl] == 0 {
 			for i := 0; i < DelayWinSize; i++ {
-				s.Stats[ttl].Update(float64(r.Delay))
+				s.Stats[ttl].UpdateWeighted(float64(r.Delay))
 			}
 			s.InitFlag[ttl] = 1
 		}
@@ -248,7 +248,7 @@ func PrintDB(SessionDB *sync.Map, probeName string, probList []string, maxPath i
 
 					si := data.ServerInfo[i]
 					sd := data.Stats[i]
-					delay, jitter, loss := sd.Get()
+					delay, jitter, loss := sd.GetWeighted(2)
 
 					pTTL := fmt.Sprintf("%4d", i)
 					pServer := fmt.Sprintf("%-20s", si.Address)
