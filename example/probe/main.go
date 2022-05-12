@@ -27,6 +27,8 @@ func main() {
 		"www.bilibili.com",
 		"www.douban.com",
 		"www.sjtu.edu.cn",
+		"www.tsinghua.edu.cn",
+		"www.mit.edu",
 		"www.online.sh.cn",
 		"www.cisco.com",
 		"www.github.com",
@@ -37,7 +39,12 @@ func main() {
 		"www.aws.com",
 		"www.netflix.com",
 		"www.ebay.com",
-	}
+		"www.office365.com",
+		"www.salesforce.com",
+		"video.huawan.com",
+		"www.zoom.com",
+		"www.webex.com",
+		"meeting.tencent.com"}
 
 	maxPath := 4
 	maxTTL := 32
