@@ -16,7 +16,7 @@ sudo service clickhouse-server start
 sudo apt install  adduser libfontconfig1 prometheus prometheus-node-exporter htop
 wget https://dl.grafana.com/enterprise/release/grafana-enterprise_8.5.0_amd64.deb
 sudo dpkg -i grafana-enterprise_8.5.0_amd64.deb
-```bash
+```
 
 ### Add plugin for grafana
 ```bash
@@ -38,8 +38,9 @@ grafana UI-ID for prometheuse node export
 
 ### Clickhouse SQL
 
+```sql
 select ASN,SPName,Dest,RespAddr,TTL,FlowKey,count(),avg(Delay) from zprobe WHERE Dest =='www.github.com' GROUP by Dest,RespAddr,TTL,FlowKey,ASN,SPName ORDER by TTL,FlowKey
-
+```
 
 ### Clickhouse Sliding window(backup)
 
