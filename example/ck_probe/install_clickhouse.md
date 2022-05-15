@@ -1,3 +1,6 @@
+### Install clickhouse grafana
+
+```bash
 sudo apt-get install apt-transport-https ca-certificates dirmngr
 sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv E0C56BD4
 
@@ -13,9 +16,10 @@ sudo service clickhouse-server start
 sudo apt install  adduser libfontconfig1 prometheus prometheus-node-exporter htop
 wget https://dl.grafana.com/enterprise/release/grafana-enterprise_8.5.0_amd64.deb
 sudo dpkg -i grafana-enterprise_8.5.0_amd64.deb
+```bash
 
-
-
+### Add plugin for grafana
+```bash
 grafana-cli plugins install vertamedia-clickhouse-datasource
 
 sudo grafana-cli plugins install gowee-traceroutemap-panel
@@ -24,6 +28,7 @@ sudo grafana-cli plugins install agenty-flowcharting-panel
 
 sudo service grafana-server stop
 sudo service grafana-server start
+```
 
 
 grafana UI-ID for prometheuse node export
@@ -36,7 +41,9 @@ grafana UI-ID for prometheuse node export
 select ASN,SPName,Dest,RespAddr,TTL,FlowKey,count(),avg(Delay) from zprobe WHERE Dest =='www.github.com' GROUP by Dest,RespAddr,TTL,FlowKey,ASN,SPName ORDER by TTL,FlowKey
 
 
-### Clickhouse Sliding window
+### Clickhouse Sliding window(backup)
+
+
 https://stackoverflow.com/questions/64733246/clickhouse-sliding-moving-window
 
 Starting from version 21.4 added the full support of window-functions. At this moment it was marked as an experimental feature.
